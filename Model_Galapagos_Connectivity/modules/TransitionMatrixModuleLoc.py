@@ -102,6 +102,7 @@ class ConstructTransitionMatrix:
         print(count, 'particles have beached, which is', np.round(count/self.trajectory_lons.shape[0], 2)*100, 'percent')    
         self.save_transition_matrix()
         
+
 class ConstructTransitionMatrixOnlyTrajData:
     
     
