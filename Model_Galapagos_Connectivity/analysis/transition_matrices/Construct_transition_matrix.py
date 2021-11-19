@@ -18,15 +18,19 @@ import xarray as xr
 from SimpleFunctions import Functions as func
 
 
-savename = '2008_2012'
+#define the path to the dictionary with the simulation data.
 path_to_dict = '/data/oceanparcels/output_data/data_Quinten/Paper_Galapagos/Data/Simulations/Simulation2008-2012.dictionary'
 
+#load the dictionary
 traj_data_dict = func.load_dict(path_to_dict)
 
+#the savename is the name the of the file after we save the transitionmatrix
+savename = '2008_2012'
 Tm_obj_wob = TraM(traj_data_dict, delta_time = 1, savename = savename, beaching_timescale = 5)
 Tm_obj_wob.construct_matrix()
 tm = Tm_obj_wob.transition_matrix
 
+#save the 
 np.save('/data/oceanparcels/output_data/data_Quinten/Paper_Galapagos/Data/Simulations/TransitionMatrix2008_2012', tm)
 
 
