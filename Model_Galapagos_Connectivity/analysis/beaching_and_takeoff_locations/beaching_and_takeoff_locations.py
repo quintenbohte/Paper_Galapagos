@@ -20,16 +20,25 @@ parent_dir = str(Path(os.path.abspath(__file__)).parents[2])
 
 ########################################## LOAD DATA ######################################
 
+#savename is the name we gave as input when the transition matrix was created
 savename = 'long_run'
+#load the transition matrix
 transitionmatrix = np.load(parent_dir + '\data\output\Transition_matrices\Tm_' +savename + '.npy')
+#load the gridsdataframe
 gridsdataframe = pd.read_csv(parent_dir + '\data\input\galapagos_field_data\GridsDataFrame.csv')
 
 ########################################## DETERMINE BEACHING AND TAKEOFF ###########################################
 
+#make beachtakeoffobject using the BeachTakeOff Analysis class (BTA). Only takes the transition matrix as input
 BeachTakeoffObject = BTA(transitionmatrix)
+
+#compute the take off locations, using the take_off_locations method in the BTA
 BeachTakeoffObject.take_off_locations()
+
+#compute the beach_locations, using the the beach_locations method
 BeachTakeoffObject.beach_locations()
 
+#plot the takeoff and beach locations. 
 BeachTakeoffObject.plot(savename_fig = 'long_run', takeoff = True)
 BeachTakeoffObject.plot(savename_fig = 'long_run', beach = True)
 

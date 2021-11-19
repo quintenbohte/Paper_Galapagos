@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep  9 10:38:06 2021
+Created on Sat Oct 16 18:06:18 2021
 
 @author: quint
 """
@@ -10,42 +10,39 @@ from parcels import Field, FieldSet, JITParticle, ScipyParticle
 from parcels import ParticleFile, ParticleSet, Variable, VectorField, ErrorCode
 from parcels.tools.converters import GeographicPolar 
 from datetime import timedelta as delta
-from os import path
+#from os import path
 from glob import glob
 import numpy as np
-import dask
-import os
-
-import math
+#import dask
+#import math
 import xarray as xr
 #from parcels import AdvectionRK4
 from netCDF4 import Dataset
-import warnings
+#import warnings
 import matplotlib.pyplot as plt
+import math 
 import pickle
-warnings.simplefilter('ignore', category=xr.SerializationWarning)
-from operator import attrgetter
-from pathlib import Path
-import sys
+#import pickle
+#warnings.simplefilter('ignore', category=xr.SerializationWarning)
+#from operator import attrgetter
 
+#import sys
 
-parent_dir = str(Path(os.path.abspath(__file__)).parents[1])
-
-
-sys.path.append(r"C:\Users\quint\Documents\Quinten_studie\Publicatie\Modules")
-
-
+#sys.path.append(r"C:\Users\quint\Documents\Quinten_studie\Publicatie\Modules")
 
 #from SimpleFunctions import Functions as Func
 
 ############ FUNCTIONS ####################
-
 def Convert_to_single_particles(data, length_simulation, advection_duration, output_frequency, repeatdt, deltatime):
 
     advection_duration_hours = int(advection_duration*(24/output_frequency))+1 
     advected_timesteps = len(data[1,:])
     number_particles = math.ceil(advected_timesteps/advection_duration_hours)
-    ReleaseLon = list(np.load(r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Data\Output\ReleaseLocations\ReleaseLon.npy'))
+    
+    
+    PathToNethome = '/nethome/5546486/Publicatie'
+
+    ReleaseLon = list(np.load(PathToNethome + '/Data/Input/release_locations/ReleaseLat.npy'))
 
     release_locations = len(ReleaseLon)
 
@@ -84,15 +81,19 @@ def Convert_to_single_particles(data, length_simulation, advection_duration, out
                 print('index:',index)
                 
                 output_trajectory[index,0:len(last_particle)] = last_particle
+
     return output_trajectory
+
 
 ############ RELEASE LOCATIONS ####################
 
+PathToNethome = '/nethome/5546486/Publicatie'
 
-ReleaseLat = list(np.load(parent_dir + '\data\input\galapagos_field_data\ReleaseLat.npy'))
-ReleaseLon = list(np.load(parent_dir + '\data\input\galapagos_field_data\ReleaseLon.npy'))
+ReleaseLat = list(np.load(PathToNethome + '/Data/Input/release_locations/ReleaseLat.npy'))
+ReleaseLon = list(np.load(PathToNethome + '/Data/Input/release_locations/ReleaseLon.npy'))
 
 ############ SIMULATIONS SPECIFICATIONS ####################
+
 
 length_simulation = 1800 #unit: days (for how long do we deploy particles)
 advection_duration = 60 #unit: days (how long does one particle advect in the fields)
@@ -100,9 +101,9 @@ output_frequency = 1     #unit: hours
 repeatdt = 24        #unit: hours
 deltatime = 1           #dt in hours
 
-#data_in = r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Data\Input'
-#data_in = '\model_local_pc\da'
-savename = 'test_interpolation_delete_part_3'
+
+data_in = '/data/oceanparcels/input_data/MITgcm4km'
+savename = '2008_2012'
 
 domain = [-92, -88, -2, 2]
 
@@ -116,7 +117,8 @@ def getclosest_ij(lats,lons,latpt,lonpt):
     return minindex_lat, minindex_lon   # Get 2D index for latvals and lonvals arrays from 1D index
 
 
-dfile = Dataset(parent_dir + '\data\input\grid_data\RGEMS3_Surf_grid.nc')
+
+dfile = Dataset(data_in+'/RGEMS3_Surf_grid.nc')
 lon = dfile.variables['XC'][:]
 lat = dfile.variables['YC'][:]
 loncor = dfile.variables['XG'][:]
@@ -131,13 +133,9 @@ loncordomain = lon[ix_min:ix_max]
 latcordomain = lat[iy_min:iy_max]
 ############ CREATE FIELDSET ####################
 
-#PathToVelocity = r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Data\Input\velocity_data_2008_2009\*'
-PathToVelocity = parent_dir + '\data\input\RGEMS_surf\RGEMS_surf_all_years\*'
-#PathToVelocityrel = r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Model_local_pc\data\input\velocity_data\velocity_data_all_years\*'
-#PathToGrid = r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Data\Input\RGEMS3_Surf_grid.nc'
-PathToGrid = parent_dir + '\data\input\grid_data\RGEMS3_Surf_grid.nc'
-#PathToGrid = r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Model_local_pc\data\input\grid_data\RGEMS3_Surf_grid.nc'
-
+#PathToVelocity = '/data/oceanparcels/output_data/data_Quinten/Paper_Galapagos/Data/velocity_data/*'
+PathToVelocity = PathToNethome + '/Data/Input/velocity_data/*'
+PathToGrid = '/data/oceanparcels/output_data/data_Quinten/Paper_Galapagos/Data/grid_data/RGEMS3_Surf_grid.nc'
 
 VelocityField = sorted(glob(PathToVelocity))
 GridField = glob(PathToGrid)
@@ -158,15 +156,14 @@ fieldset = FieldSet.from_mitgcm(files_MITgcm,
                                      dimensions,
                                      indices = indices)
 
-
 ############ ADD EXTRA FIELDS/CONSTANTS TO FIELDSET ####################
 
 #load fields
 
-landmask = np.load(parent_dir + '\data\input\galapagos_field_data\Landmask.npy')
-coastgrids = np.load(parent_dir + '\data\input\galapagos_field_data\Coastgrids.npy')
+landmask = np.load(PathToNethome + '/Data/Input/fielddata/Landmask.npy')
+coastgrids = np.load(PathToNethome + '/Data/Input/fielddata/Coastgrids.npy')
 coastgrids = np.roll(coastgrids,1,0)
-gridnumbermask = np.load(parent_dir + '\data\input\galapagos_field_data\GridNumberMask.npy')
+gridnumbermask = np.load(PathToNethome + '/Data/Input/fielddata/GridNumberMask.npy')
 gridnumbermask = np.roll(gridnumbermask,1,0)
 
 fieldset.add_constant('advection_duration',advection_duration)    
@@ -174,7 +171,6 @@ fieldset.add_constant('lon_max',lon[ix_max] - 0.2)
 fieldset.add_constant('lon_min',lon[ix_min] + 0.2)
 fieldset.add_constant('lat_max',lat[iy_max] - 0.2)
 fieldset.add_constant('lat_min',lat[iy_min] + 0.2)
-
 
 fieldset.add_field(Field('landmask',
                          data = landmask,
@@ -206,12 +202,12 @@ fieldset.add_field(Field('gridnumbermask',
 #BorV = np.load(r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Data\Output\Galapagos_RGEMS_FieldData\borderCurrentV.npy')
 #BorVlon = np.load(r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Data\Output\Galapagos_RGEMS_FieldData\BorderVlon.npy')
 #BorVlat = np.load(r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Data\Output\Galapagos_RGEMS_FieldData\BorderVlat.npy')
-
+#
 #fieldset.add_field(Field('BorderCurrentU', BorU, BorUlon, BorUlat))
 #fieldset.add_field(Field('BorderCurrentV', BorV, BorVlon, BorVlat))
 
 
-DistanceFromShore = np.load(parent_dir + '\data\input\galapagos_field_data\distance2shore.npy')
+DistanceFromShore = np.load(PathToNethome + '/Data/Input/fielddata/distance2shore.npy')
 x = np.linspace(domain[0],domain[1],len(londomain))
 y = np.linspace(domain[2],domain[3],len(londomain))
 lon, lat = np.meshgrid(x,y)
@@ -349,30 +345,22 @@ def gridnumbertesting(particle, fieldset, time):
     
         particle.gridnumber = fieldset.gridnumbermask[time, particle.depth, particle.lat, particle.lon]
         
-        
-def delete_particle(particle, fieldset, time):
-   # This delete particle format from Philippe Delandmeter
-   # https://github.com/OceanParcels/Parcelsv2.0PaperNorthSeaScripts/blob/master/northsea_mp_kernels.py
-   print("Particle [%d] lost !! (%g %g %g %g)" % (
-   particle.id, particle.lon, particle.lat, particle.depth, particle.time))
-   particle.delete()
-   
-#def AntiBeachNudging(particle,fieldset,time):
-#    """    
-#    The nudging current is 1 m s^-1, which ought to be sufficient to overpower
-#    any coastal current (I hope) and push our particle back out to sea so as to
-#    not get stuck
-#    
-#    update 11/03/2020: Following tests and discussions with Cleo, the nudging 
-#    current will now kick in starting at 500m from the coast, since otherwise 
-#    the particles tended to get stuck if we used the velocity treshhold. 
-#    """
-#    particle.distancetoshore = fieldset.distance2shore[time,particle.depth,particle.lat,particle.lon]
-#    if particle.distancetoshore < 2:
-#        print('test')
-#        borUab,borVab=fieldset.BorderCurrentU[time, particle.depth, particle.lat, particle.lon],fieldset.BorderCurrentV[time, particle.depth, particle.lat, particle.lon]
-#        particle.lon += 0.0000000*borUab*particle.dt
-#        particle.lat += 0.0000000*borVab*particle.dt
+def AntiBeachNudging(particle,fieldset,time):
+    """    
+    The nudging current is 1 m s^-1, which ought to be sufficient to overpower
+    any coastal current (I hope) and push our particle back out to sea so as to
+    not get stuck
+    
+    update 11/03/2020: Following tests and discussions with Cleo, the nudging 
+    current will now kick in starting at 500m from the coast, since otherwise 
+    the particles tended to get stuck if we used the velocity treshhold. 
+    """
+    particle.distancetoshore = fieldset.distance2shore[time,particle.depth,particle.lat,particle.lon]
+    if particle.distancetoshore < 2:
+        print('test')
+        borUab,borVab=fieldset.BorderCurrentU[time, particle.depth, particle.lat, particle.lon],fieldset.BorderCurrentV[time, particle.depth, particle.lat, particle.lon]
+        particle.lon += 0.0000000*borUab*particle.dt
+        particle.lat += 0.0000000*borVab*particle.dt
 
 def SetParticleBack(particle,fieldset,time):
     
@@ -382,7 +370,13 @@ def SetParticleBack(particle,fieldset,time):
         particle.lon = particle.startlon
         particle.lat = particle.startlat
         particle.age = 0
-        
+
+def delete_particle(particle, fieldset, time):
+   # This delete particle format from Philippe Delandmeter
+   # https://github.com/OceanParcels/Parcelsv2.0PaperNorthSeaScripts/blob/master/northsea_mp_kernels.py
+   print("Particle [%d] lost !! (%g %g %g %g)" % (
+   particle.id, particle.lon, particle.lat, particle.depth, particle.time))
+   particle.delete()     
         
         
         
@@ -398,7 +392,6 @@ class GalapagosParticle(JITParticle):
     startlon = Variable('startlon', dtype=np.float32, initial = ReleaseLon)
     startlat = Variable('startlat', dtype=np.float32, initial = ReleaseLat)
     delta_time = Variable('delta_time', dtype=np.float32, initial = deltatime)
-    
 #    u4_test =  Variable('u4_test', dtype=np.float32, initial = 0.)
 #    displ_x = Variable('displ_x', dtype=np.float32, initial = 0.)
 #    displ_y = Variable('displ_y', dtype=np.float32, initial = 0.)
@@ -430,7 +423,7 @@ else:
 ############ EXECUTION PARTICLE SET ####################
 
 
-outfile = pset.ParticleFile(parent_dir + '\data\output\simulations\Simulation_' + savename + '.nc', outputdt = delta(hours = output_frequency))
+outfile = pset.ParticleFile('/data/oceanparcels/output_data/data_Quinten/Paper_Galapagos/Data/Simulations/Simulation' + savename + '.nc' , outputdt = delta(hours = output_frequency))
 
 kernels = (pset.Kernel(AdvectionRK4) + pset.Kernel(Age) + 
            pset.Kernel(beachtesting) + pset.Kernel(coasttesting) +
@@ -455,60 +448,35 @@ pset.execute(kernels,
 outfile.export()
 outfile.close()
 
-Sim_data = xr.open_dataset(parent_dir + '\data\output\simulations\Simulation_' + savename + '.nc')
+
+############################################## CONVERT DATA TO SINGLE PARTICLES ##############################################################
+
+Sim_data = xr.open_dataset('/data/oceanparcels/output_data/data_Quinten/Paper_Galapagos/Data/Simulations/Simulation' + savename + '.nc' )
 lon_traj = Sim_data['lon'].data
 lat_traj = Sim_data['lat'].data 
 age_traj = Sim_data['age'].data 
-gridnumber_traj = Sim_data['gridnumber'].data
-coastgrid_traj = Sim_data['coastcell'].data
+gridnumber_traj = Sim_data['gridnumber'].data 
+coastgrid_traj = Sim_data['coastcell'].data 
 
-age_subset = age_traj[0:10000]
+age_per_particle = Convert_to_single_particles(age_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
+lon_per_particle = Convert_to_single_particles(lon_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
+lat_per_particle = Convert_to_single_particles(lat_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
+grid_numb_per_particle = Convert_to_single_particles(gridnumber_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
+coastgrid_per_particle = Convert_to_single_particles(coastgrid_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
 
-#age_per_particle = Convert_to_single_particles(age_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
-#lon_per_particle = Convert_to_single_particles(lon_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
-#lat_per_particle = Convert_to_single_particles(lat_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
-#grid_numb_per_particle = Convert_to_single_particles(gridnumber_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
-#coastgrid_per_particle = Convert_to_single_particles(coastgrid_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
+trajectory_data = {'age':age_per_particle,
+                    'lon':lon_per_particle,
+                   'lat':lat_per_particle,
+                   'gridnumber':grid_numb_per_particle,
+                   'coastgrids':coastgrid_per_particle}
 
-#age_subset = age_per_particle[0:10000]
+#create the dictionary with all the simulation data in it. This dictionary is used to construct the transition matrices
+with open('/data/oceanparcels/output_data/data_Quinten/Paper_Galapagos/Data/Simulations/Simulation' + savename +  '.dictionary', 'wb') as config_dictionary_file:
+        
+         pickle.dump(trajectory_data, config_dictionary_file)
 
-#trajectory_data = {'age':age_per_particle,
-#                   'lon':lon_per_particle,
-#                   'lat':lat_per_particle,
-#                   'gridnumber':grid_numb_per_particle,
-#                   'coastgrids':coastgrid_per_particle}
-#
-#
-#
-#def test_convert_to_single_particle(matrix):
-#    
-#    for i in range(len(matrix[:,1])): #row
-#        startage = matrix[i,0]
-#        if startage != 0:
-#            print('start age')
-#            print(i)
-#            
-#        for j in range(len(matrix[1,:])-2): #column
-#            currentage = matrix[i,j]
-#            nextage = matrix[i,j+1]
-#
-#            if currentage > nextage:
-#                print('next age wrong!')
-#                print('i',i)
-#                print('j',j)
-#                
-#
-#test_convert_to_single_particle(age_subset)
-#    
-#    
-#    
-#
-#with open(parent_dir + '\data\output\simulations\Simulation_' + savename + '.dictionary', 'wb') as config_dictionary_file:
-#        
-#         pickle.dump(trajectory_data, config_dictionary_file)
-#
-#
-#
+
+
 
 
 
