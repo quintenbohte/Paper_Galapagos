@@ -21,7 +21,7 @@ parent_dir = str(Path(os.path.abspath(__file__)).parents[2])
 ########################################## LOAD DATA ######################################
 
 #savename is the name we gave as input when the transition matrix was created
-savename = 'long_run'
+savename = 'test'
 #load the transition matrix
 transitionmatrix = np.load(parent_dir + '\data\output\Transition_matrices\Tm_' +savename + '.npy')
 #load the gridsdataframe
@@ -39,8 +39,9 @@ BeachTakeoffObject.take_off_locations()
 BeachTakeoffObject.beach_locations()
 
 #plot the takeoff and beach locations. 
-BeachTakeoffObject.plot(savename_fig = 'long_run', takeoff = True)
-BeachTakeoffObject.plot(savename_fig = 'long_run', beach = True)
+savename_fig = 'test'
+BeachTakeoffObject.plot(savename_fig = savename_fig, takeoff = True)
+BeachTakeoffObject.plot(savename_fig = savename_fig, beach = True)
 
 
 
