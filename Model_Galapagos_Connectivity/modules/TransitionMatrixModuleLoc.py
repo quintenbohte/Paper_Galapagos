@@ -198,7 +198,7 @@ class ConstructTransitionMatrixOnlyTrajData:
                         
                         break
                     
-        self.save_transition_matrix()
+#        self.save_transition_matrix()
         
         print(count, 'particles have beached, which is', np.round(count/self.coastcells.shape[0], 2)*100, 'percent')    
 

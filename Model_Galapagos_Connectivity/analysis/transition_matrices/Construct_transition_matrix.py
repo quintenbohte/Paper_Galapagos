@@ -19,19 +19,22 @@ from SimpleFunctions import Functions as func
 
 
 #define the path to the dictionary with the simulation data.
-path_to_dict = '/data/oceanparcels/output_data/data_Quinten/Paper_Galapagos/Data/Simulations/Simulation2008-2012.dictionary'
+#the savename should be the same savename as you used in for the simulation
+savename = 'test'
+path_to_dict = parent_dir + '\data\output\simulations\Simulation_' + savename +  '.dictionary'
 
 #load the dictionary
 traj_data_dict = func.load_dict(path_to_dict)
 
 #the savename is the name the of the file after we save the transitionmatrix
-savename = '2008_2012'
+
 Tm_obj_wob = TraM(traj_data_dict, delta_time = 1, savename = savename, beaching_timescale = 5)
 Tm_obj_wob.construct_matrix()
 tm = Tm_obj_wob.transition_matrix
 
-#save the 
-np.save('/data/oceanparcels/output_data/data_Quinten/Paper_Galapagos/Data/Simulations/TransitionMatrix2008_2012', tm)
+#save the transition matrix
+np.save(parent_dir + '\data\output\Transition_matrices\Tm_' + savename, tm)
+
 
 
 

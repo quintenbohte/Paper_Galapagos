@@ -45,7 +45,7 @@ def Convert_to_single_particles(data, length_simulation, advection_duration, out
     advection_duration_hours = int(advection_duration*(24/output_frequency))+1 
     advected_timesteps = len(data[1,:])
     number_particles = math.ceil(advected_timesteps/advection_duration_hours)
-    ReleaseLon = list(np.load(r'C:\Users\quint\Documents\Quinten_studie\Publicatie\Data\Output\ReleaseLocations\ReleaseLon.npy'))
+    ReleaseLon = list(np.load(parent_dir + '\data\input\galapagos_field_data\ReleaseLon.npy'))
 
     release_locations = len(ReleaseLon)
 
@@ -488,7 +488,8 @@ grid_numb_per_particle = Convert_to_single_particles(gridnumber_traj, length_sim
 coastgrid_per_particle = Convert_to_single_particles(coastgrid_traj, length_simulation, advection_duration, output_frequency, repeatdt, deltatime)
 
 #create the dictionary with all the simulation data in it. This dictionary is used to construct the transition matrices
-trajectory_data = {'age':age_per_particle,
+trajectory_data = {
+                    'age':age_per_particle,
                     'lon':lon_per_particle,
                    'lat':lat_per_particle,
                    'gridnumber':grid_numb_per_particle,
