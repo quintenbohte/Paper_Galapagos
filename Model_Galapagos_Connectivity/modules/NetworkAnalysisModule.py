@@ -17,7 +17,7 @@ import os
 parent_dir = str(Path(os.path.abspath(__file__)).parents[1])
 
 
-
+#This class contains the methods which executes the network analysis.
 class NetworkAnalysis:
     
     def __init__(self, TransitionMatrix, GridsDataFrame):
@@ -77,20 +77,31 @@ class NetworkAnalysis:
         '''
         
         if ReverseDirections == False:
+            #loop over all nodes in the connstructed graph, these will represent the release nodes
             for release_node in ConstructedGraph.nodes():
-                print(release_node)
+
+                #loop over all nodes in the constructed graph, these will represent the beach nodes
                 for beach_node in ConstructedGraph.nodes():
+                    
+                    #We loop over all release nodes and all beach nodes. Now we want to know if there is an edge between them. For this, the
+                    #transition matrix is used. Using the number of the release grid and the number of the beach grid we can find the corresponding entry in the
+                    #transition matrix, the value of this entry is the weight of the edge between the release and beach node.
                     weight = TransitionMatrix[release_node, beach_node]
+                    #compute the weight log, which is needed for computing the most likely path
                     weightlog = -np.log(TransitionMatrix[release_node, beach_node])
+                    
+                    #If the value of the transition matrix is <0, no particles are transported from this release node to this
+                    #beach node, so no edge will be added. However, if weight > 0:
                     if weight > 0:
+                        #we add an adge, and the weight of this edge and the log weight of this edge. 
                         ConstructedGraph.add_edge(release_node,
                                        beach_node,
                                        weightpath = weight,
                                        weightlogpath = weightlog)
-                        
+        #here we do the exact same as above, but now with all edges reversed. Note that to do this we only have to transpose our transition matrix.
         if ReverseDirections == True:
             for release_node in ConstructedGraph.nodes():
-                print(release_node)
+
                 for beach_node in ConstructedGraph.nodes():
                     weight = TransitionMatrix.T[release_node, beach_node]
                     weightlog = -np.log(TransitionMatrix.T[release_node, beach_node])
@@ -142,39 +153,59 @@ class NetworkAnalysis:
         nx.draw_networkx_edges(ConstructedGraph, pos)
     
         return 
-    
-    def BetwneennesCentrality(self):
 
+
+    #This function will compute the betweenness centrality of each node using the most likely path    
+    def BetwneennesCentrality(self):
+        #the graph we will use
         ConstructedGraph = self.Graph
         
+        #the total number of nodes
         number_of_nodes = ConstructedGraph.number_of_nodes()
         
+        #the list which will be filled with all the most likely paths between all nodes
         PathList = []
+        #the list which will be filled with all the beach/target nodes
         targetList = []
+        #the list which will be filled with all the release/source nodes
         sourceList = []
+        
+        #loop over all nodes (representing the target nodes)
         for target in range(number_of_nodes):
-            print(target)
+            
+            #loop over all nodes (representing the source nodes)
             for source in range(number_of_nodes):
                 
+                #we use the try and except command, since if there is no path between two nodes it will give an error. With the try command
+                #it will then just go to the next one
                 try:
+                    #compute the ShortestPath with the dijkstra algorithm.
                     ShortestPathDijkstraLog = nx.dijkstra_path(ConstructedGraph, target,source, weight = 'weightlogpath')
+                    #fill all lists we defined above
                     targetList.append(target)
                     sourceList.append(source)
+                    #Note, this list will contain all most likely paths between all different nodes
                     PathList.append(ShortestPathDijkstraLog)
                     
                 except:
                     pass
             
-            
+        #this will be the list with the betweenness centrality for each node
         BetwCentrList = []
+        #loop over all nodes
         for grid in range(number_of_nodes):
-            print(grid)
+            #this is the count for the number of shortest path that cross a node
             count = 0
+            #we loop over all shortest paths, that we found in our graph
             for path in PathList:
-        
+                
+                #Now we check for every grid/node in how many shortest paths it appears
                 if grid in path:
+                    #for every time the grid/node appears in a shorest path, we add 1 to the count
                     count += 1
                     
+            #The betweenness centrality is the percentage of shorest paths that cross a node. So we divide the count by the
+            #total number of shortest paths. 
             BetwCentr = count/len(PathList)
             
             BetwCentrList.append(BetwCentr)
@@ -185,6 +216,7 @@ class NetworkAnalysis:
         self.BetweennessCentralitiesNorm =  (data - np.min(data)) / (np.max(data) - np.min(data))
 #        return BetwCentrList
 
+    #this method computes the normal betweenness centrality, using the networkx module.
     def BetwneennesCentralityNetworkx(self):
          ConstructedGraph = self.Graph
          self.BetweennessCentralities = nx.betweenness_centrality(ConstructedGraph)
@@ -193,7 +225,8 @@ class NetworkAnalysis:
 
     
 
-
+    #This method make a a dataframe, where each row represents a node. The column values contain the lon, lat, grid number, and betweenness centrality of the node
+    #this dataframe is very convenient, since it contain all usefull information of the network analysis and it is usefull for plotting. 
     def ConstructNetworkDataFrame(self):
 
         BetwCentrList = self.BetweennessCentralities
@@ -206,7 +239,7 @@ class NetworkAnalysis:
         self.NetworkDataFrame = NetworkDataFrame
 
 
-
+    #This method plots the betweenness centrality on a map of the galapagos. 
     def PlotCentrality(self, scaling, savename, title, log = False):
         
         NetworkDataFrame = self.NetworkDataFrame
